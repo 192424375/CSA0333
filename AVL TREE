@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct N{int k,h;struct N*l,*r;}N;
+
+int h(N*n){return n?n->h:0;}
+int max(int a,int b){return a>b?a:b;}
+N* newN(int k){N*n=malloc(sizeof(N));n->k=k;n->h=1;n->l=n->r=0;return n;}
+
+N* rr(N*y){N*x=y->l; y->l=x->r; x->r=y; y->h=max(h(y->l),h(y->r))+1; x->h=max(h(x->l),h(x->r))+1; return x;}
+N* lr(N*x){N*y=x->r; x->r=y->l; y->l=x; x->h=max(h(x->l),h(x->r))+1; y->h=max(h(y->l),h(y->r))+1; return y;}
+int bf(N*n){return n?h(n->l)-h(n->r):0;}
+
+N* ins(N*n,int k){
+ if(!n)return newN(k);
+ if(k<n->k)n->l=ins(n->l,k);
+ else if(k>n->k)n->r=ins(n->r,k);
+ else return n;
+ n->h=1+max(h(n->l),h(n->r));
+ int b=bf(n);
+ if(b>1&&k<n->l->k)return rr(n);
+ if(b<-1&&k>n->r->k)return lr(n);
+ if(b>1&&k>n->l->k){n->l=lr(n->l);return rr(n);}
+ if(b<-1&&k<n->r->k){n->r=rr(n->r);return lr(n);}
+ return n;
+}
+
+N* minV(N*n){while(n->l)n=n->l;return n;}
+
+N* del(N*root,int k){
+ if(!root)return root;
+ if(k<root->k)root->l=del(root->l,k);
+ else if(k>root->k)root->r=del(root->r,k);
+ else {
+  if(!root->l||!root->r){
+   N*temp=root->l?root->l:root->r;
+   if(!temp){temp=root;root=0;}else *root=*temp;
+   free(temp);
+  }else{
+   N*temp=minV(root->r);
+   root->k=temp->k;
+   root->r=del(root->r,temp->k);
+  }
+ }
+ if(!root)return root;
+ root->h=1+max(h(root->l),h(root->r));
+ int b=bf(root);
+ if(b>1&&bf(root->l)>=0)return rr(root);
+ if(b>1&&bf(root->l)<0){root->l=lr(root->l);return rr(root);}
+ if(b<-1&&bf(root->r)<=0)return lr(root);
+ if(b<-1&&bf(root->r)>0){root->r=rr(root->r);return lr(root);}
+ return root;
+}
+
+int search(N*n,int k){
+ if(!n)return 0;
+ if(k==n->k)return 1;
+ if(k<n->k)return search(n->l,k);
+ return search(n->r,k);
+}
+
+void inorder(N*n){
+ if(!n)return;
+ inorder(n->l);
+ printf("%d ",n->k);
+ inorder(n->r);
+}
+
+int main(){
+ N* root=0;
+ root=ins(root,10);
+ root=ins(root,20);
+ root=ins(root,30);
+ printf("Inorder: "); inorder(root); printf("\n");
+ root=del(root,20);
+ printf("After deleting 20: "); inorder(root); printf("\n");
+ printf("Search 30: %s\n",search(root,30)?"Found":"Not Found");
+ printf("Search 40: %s\n",search(root,40)?"Found":"Not Found");
+}
+OUTPUT
+Inorder: 10 20 30 
+After deleting 20: 10 30 
+Search 30: Found
+Search 40: Not Found
+
+
+=== Code Execution Successful ===
